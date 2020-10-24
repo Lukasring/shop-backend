@@ -1,21 +1,13 @@
-const path = require("path");
-
 const express = require("express");
 
-const rootDir = require("../utils/path");
-const adminData = require("./admin");
+const shopController = require("../controllers/shop");
 
 const router = express.Router();
 
-router.get("/", (req, res, next) => {
-  // console.log("*** MIDDLEWARE ***");
-  res.render("shop", {
-    products: adminData.products,
-    docTitle: "Shop",
-    path: "/",
-    productCSS: true,
-    activeShop: true,
-  });
-});
+router.get("/", shopController.getIndex);
+router.get("/products", shopController.getProducts);
+router.get("/cart", shopController.getCartItems);
+router.get("/orders", shopController.getOrders);
+router.get("/checkout", shopController.getCheckoutItems);
 
 module.exports = router;
