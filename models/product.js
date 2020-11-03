@@ -1,20 +1,6 @@
-const fs = require("fs");
-const path = require("path");
+const db = require("../utils/database");
 
 const Cart = require("./cart");
-
-const FILE_PATH = path.join(
-  path.dirname(require.main.filename),
-  "data",
-  "products.json"
-);
-
-const readProductsFromFile = (callback) => {
-  fs.readFile(FILE_PATH, (error, fileContent) => {
-    if (error) return callback([]);
-    callback(JSON.parse(fileContent));
-  });
-};
 
 module.exports = class Product {
   constructor(id, title, imageURL, description, price) {
@@ -25,45 +11,20 @@ module.exports = class Product {
     this.price = price;
   }
 
-  static fetchAll(callback) {
-    readProductsFromFile(callback);
+  static fetchAll() {
+    return db.execute("SELECT * FROM products");
   }
 
-  static getProductById(id, callback) {
-    readProductsFromFile((products) => {
-      callback(products.find((product) => product.id === id));
-    });
+  static getProductById(id) {
+    return db.execute("SELECT * FROM products WHERE products.id = ?", [id]);
   }
 
-  static deleteProduct(id) {
-    readProductsFromFile((products) => {
-      const product = products.find((product) => product.id === id);
-      const updatedProducts = products.filter((product) => product.id !== id);
-      fs.writeFile(FILE_PATH, JSON.stringify(updatedProducts), (err) => {
-        if (err) console.log(err);
-        if (!err) Cart.deleteProduct(id, product.price);
-      });
-    });
-  }
+  static deleteProduct(id) {}
 
   save() {
-    readProductsFromFile((products) => {
-      if (this.id) {
-        const existingProductIndex = products.findIndex(
-          (product) => product.id === this.id
-        );
-        const updatedProducts = [...products];
-        updatedProducts[existingProductIndex] = this;
-        fs.writeFile(FILE_PATH, JSON.stringify(updatedProducts), (err) => {
-          if (err) console.log(err);
-        });
-      } else {
-        this.id = Math.random().toString();
-        products.push(this);
-        fs.writeFile(FILE_PATH, JSON.stringify(products), (err) => {
-          if (err) console.log(err);
-        });
-      }
-    });
+    return db.execute(
+      "INSERT INTO products (title, price, imageUrl, description) VALUES (?, ?, ?, ?)",
+      [this.title, this.price, this.imageURL, this.description]
+    );
   }
 };
