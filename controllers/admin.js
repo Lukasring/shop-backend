@@ -15,8 +15,7 @@ exports.getEditProduct = async (req, res, next) => {
   // Product.findByPk(prodId)
 
   try {
-    const products = await req.user.getProducts({ where: { id: prodId } });
-    const product = products[0];
+    const product = await Product.findById(prodId);
     if (!product) return res.redirect("/");
 
     res.render("admin/edit-product", {
@@ -39,11 +38,7 @@ exports.postEditProduct = async (req, res, next) => {
   const id = req.body.productId;
 
   try {
-    const product = await Product.findByPk(id);
-    product.title = title;
-    product.imageUrl = imageURL;
-    product.price = price;
-    product.description = description;
+    const product = new Product(title, price, description, imageURL, id);
     const productSaved = await product.save();
     if (productSaved) {
       res.redirect("/admin/products");
@@ -56,22 +51,15 @@ exports.postEditProduct = async (req, res, next) => {
 
 exports.postAddProduct = async (req, res, next) => {
   const title = req.body.title;
-  const imageURL = req.body.imageURL;
+  const imageUrl = req.body.imageURL;
   const price = +req.body.price;
   const description = req.body.description;
+  const userId = req.user._id;
 
-  /* 
-  User objekta storinam per middleware app.js faile,
-  sequelize jam sukuria createProduct, kuris susieja userId su Product
-  */
   try {
-    const productCreated = await req.user.createProduct({
-      title: title,
-      price: price,
-      imageUrl: imageURL,
-      description: description,
-    });
-    if (productCreated) res.redirect("/admin/products");
+    const product = new Product(title, price, description, imageUrl, userId);
+    const result = await product.save();
+    if (result) res.redirect("/admin/products");
   } catch (err) {
     console.log("!!! ERROR !!! controllers/admin.js postAddProduct");
     console.log(err);
@@ -80,7 +68,7 @@ exports.postAddProduct = async (req, res, next) => {
 
 exports.getAdminProducts = async (req, res, next) => {
   try {
-    const products = await req.user.getProducts();
+    const products = await Product.fetchAll();
     res.render("admin/products", {
       products: products,
       path: "/admin/products",
@@ -96,8 +84,7 @@ exports.postDeleteProduct = async (req, res, next) => {
   const id = req.body.productId;
   // Product.destroy({where: {id: id}});
   try {
-    const product = await Product.findByPk(id);
-    const productDeleted = await product.destroy();
+    const productDeleted = await Product.deleteById(id);
     if (productDeleted) res.redirect("/admin/products");
   } catch (err) {
     console.log("!!! ERROR !!! controllers/admin.js -> postDeleteProduct");
