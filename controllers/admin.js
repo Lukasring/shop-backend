@@ -32,15 +32,17 @@ exports.getEditProduct = async (req, res, next) => {
 
 exports.postEditProduct = async (req, res, next) => {
   const title = req.body.title;
-  const imageURL = req.body.imageURL;
+  const imageUrl = req.body.imageURL;
   const price = +req.body.price;
   const description = req.body.description;
   const id = req.body.productId;
 
   try {
-    const product = new Product(title, price, description, imageURL, id);
-    const productSaved = await product.save();
-    if (productSaved) {
+    const updated = await Product.updateOne(
+      { _id: id },
+      { title, price, description, imageUrl }
+    );
+    if (updated) {
       res.redirect("/admin/products");
     }
   } catch (err) {
@@ -49,7 +51,7 @@ exports.postEditProduct = async (req, res, next) => {
   }
 };
 
-exports.postAddProduct = async (req, res, next) => {
+exports.postAddProduct = (req, res, next) => {
   const title = req.body.title;
   const imageUrl = req.body.imageURL;
   const price = +req.body.price;
@@ -57,9 +59,17 @@ exports.postAddProduct = async (req, res, next) => {
   const userId = req.user._id;
 
   try {
-    const product = new Product(title, price, description, imageUrl, userId);
-    const result = await product.save();
-    if (result) res.redirect("/admin/products");
+    const product = new Product({
+      title,
+      price,
+      description,
+      imageUrl,
+      userId,
+    });
+    product.save((err) => {
+      if (err) console.log(err);
+      res.redirect("/admin/products");
+    });
   } catch (err) {
     console.log("!!! ERROR !!! controllers/admin.js postAddProduct");
     console.log(err);
@@ -68,7 +78,8 @@ exports.postAddProduct = async (req, res, next) => {
 
 exports.getAdminProducts = async (req, res, next) => {
   try {
-    const products = await Product.fetchAll();
+    //* mongoose veikia su async await arba .then bet jie nera promisses, jei nori promise, reikia .exec() pridet
+    const products = await Product.find();
     res.render("admin/products", {
       products: products,
       path: "/admin/products",
@@ -84,7 +95,7 @@ exports.postDeleteProduct = async (req, res, next) => {
   const id = req.body.productId;
   // Product.destroy({where: {id: id}});
   try {
-    const productDeleted = await Product.deleteById(id);
+    const productDeleted = await Product.deleteOne({ _id: id });
     if (productDeleted) res.redirect("/admin/products");
   } catch (err) {
     console.log("!!! ERROR !!! controllers/admin.js -> postDeleteProduct");

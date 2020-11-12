@@ -3,7 +3,7 @@ const path = require("path");
 const express = require("express");
 const bodyParser = require("body-parser");
 //MongoDB
-const { mongoConnect } = require("./utils/database");
+const mongoose = require("mongoose");
 //Models
 const User = require("./models/user");
 //Routes
@@ -22,8 +22,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(async (req, res, next) => {
   try {
-    const user = await User.findUserById("5fac04275d650c4b013af04e");
-    req.user = new User(user.name, user.email, user.cart, user._id);
+    const user = await User.findById("5fad380fcfedd917bc00877b");
+    req.user = user;
   } catch (err) {
     console.log(err);
   }
@@ -38,6 +38,24 @@ app.use(shopRoutes);
 //Handling errors
 app.use(errorController.get404);
 
-mongoConnect(() => {
-  app.listen(3000);
-});
+mongoose
+  .connect(
+    "mongodb+srv://Lukas:mandarinas123@cluster0.qrzgg.mongodb.net/shop?retryWrites=true&w=majority",
+    { useUnifiedTopology: true, useNewUrlParser: true }
+  )
+  .then(() => {
+    User.findOne().then((user) => {
+      if (!user) {
+        const user = new User({
+          name: "Lukas",
+          email: "tikras@pastas.lt",
+          cart: { items: [] },
+        });
+        user.save();
+      }
+    });
+
+    console.log("connected to database...");
+    app.listen(3000, () => console.log("Server is running..."));
+  })
+  .catch((err) => console.log(err));
