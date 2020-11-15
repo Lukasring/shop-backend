@@ -9,6 +9,7 @@ exports.getProducts = async (req, res, next) => {
       products: products,
       docTitle: "All Products",
       path: "/products",
+      isAuthenticated: req.session.isLoggedIn,
     });
 
     // Product.find((err, products) => {
@@ -32,6 +33,7 @@ exports.getProduct = async (req, res, next) => {
       docTitle: `${product.title} details`,
       path: "/products",
       product: product,
+      isAuthenticated: req.session.isLoggedIn,
     });
   } catch (err) {
     console.log("!!! ERROR !!! controlers/shop.js -> getProduct");
@@ -41,13 +43,17 @@ exports.getProduct = async (req, res, next) => {
 
 exports.getCart = async (req, res, next) => {
   try {
-    const user = await req.user.execPopulate("cart.items.productId");
-    const products = user.cart.items;
+    let products = [];
+    if (req.session.isLoggedIn) {
+      const user = await req.user.execPopulate("cart.items.productId");
+      products = user.cart.items;
+    }
     // console.log(products);
     res.render("shop/cart", {
       docTitle: "Cart",
       path: "/cart",
       products: products,
+      isAuthenticated: req.session.isLoggedIn,
     });
   } catch (err) {
     console.log("!!! ERROR !!! controllers/shop.js -> getCart");
@@ -60,7 +66,10 @@ exports.postCart = async (req, res, next) => {
 
   try {
     const product = await Product.findById(prodId);
-    const productAdded = await req.user.addToCart(product);
+    let productAdded = false;
+    if (req.session.isLoggedIn) {
+      productAdded = await req.user.addToCart(product);
+    }
 
     if (productAdded) res.redirect("/cart");
   } catch (err) {
@@ -87,6 +96,7 @@ exports.getCheckoutItems = (req, res, next) => {
   res.render("shop/checkout", {
     docTitle: "Checkout",
     path: "/checkout",
+    isAuthenticated: req.session.isLoggedIn,
   });
 };
 
@@ -98,6 +108,7 @@ exports.getIndex = (req, res, next) => {
         products: products,
         docTitle: "shop",
         path: "/",
+        isAuthenticated: req.session.isLoggedIn,
       });
     });
   } catch (err) {
@@ -107,15 +118,16 @@ exports.getIndex = (req, res, next) => {
 
 exports.postOrder = async (req, res, next) => {
   try {
-    const products = await req.user.execPopulate("cart.items.productId");
-    // console.log(products.cart.items);
-    const orderProducts = products.cart.items.map((item) => {
-      return {
-        product: { ...item.productId._doc },
-        quantity: item.quantity,
-      };
-    });
-    // console.log(orderProducts);
+    let orderProducts = [];
+    if (req.session.isLoggedIn) {
+      const products = await req.user.execPopulate("cart.items.productId");
+      orderProducts = products.cart.items.map((item) => {
+        return {
+          product: { ...item.productId._doc },
+          quantity: item.quantity,
+        };
+      });
+    }
     const order = new Order({
       user: {
         name: req.user.name,
@@ -135,12 +147,16 @@ exports.postOrder = async (req, res, next) => {
 
 exports.getOrders = async (req, res, next) => {
   try {
-    const orders = await Order.find({ "user.userId": req.user._id });
+    let orders = [];
+    if (req.session.isLoggedIn) {
+      orders = await Order.find({ "user.userId": req.user._id });
+    }
     // console.log(orders);
     res.render("shop/orders", {
       orders: orders,
       docTitle: "Orders",
       path: "/orders",
+      isAuthenticated: req.session.isLoggedIn,
     });
   } catch (err) {
     console.log("!!! ERROR !!! controllers/shop.js -> getOrders");

@@ -5,6 +5,7 @@ exports.getAddProduct = (req, res, next) => {
     docTitle: "Add Product",
     path: "/admin/add-product",
     editing: false,
+    isAuthenticated: req.session.isLoggedIn,
   });
 };
 
@@ -23,6 +24,7 @@ exports.getEditProduct = async (req, res, next) => {
       path: "/admin/edit-product",
       product: product,
       editing: editMode,
+      isAuthenticated: req.session.isLoggedIn,
     });
   } catch (err) {
     console.log("!!! ERROR !!! controllers/admin.js -> getEditProduct");
@@ -56,7 +58,7 @@ exports.postAddProduct = (req, res, next) => {
   const imageUrl = req.body.imageURL;
   const price = +req.body.price;
   const description = req.body.description;
-  const userId = req.user._id;
+  const userId = req.session.user._id;
 
   try {
     const product = new Product({
@@ -84,6 +86,7 @@ exports.getAdminProducts = async (req, res, next) => {
       products: products,
       path: "/admin/products",
       docTitle: "Product List",
+      isAuthenticated: req.session.isLoggedIn,
     });
   } catch (err) {
     console.log("!!! ERROR !!! controllers/admin.js -> getAdminProducts");
