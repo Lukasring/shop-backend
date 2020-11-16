@@ -9,17 +9,7 @@ exports.getProducts = async (req, res, next) => {
       products: products,
       docTitle: "All Products",
       path: "/products",
-      isAuthenticated: req.session.isLoggedIn,
     });
-
-    // Product.find((err, products) => {
-    //   if (err) console.log(err);
-    //   res.render("shop/product-list", {
-    //     products: products,
-    //     docTitle: "All Products",
-    //     path: "/products",
-    //   });
-    // });
   } catch (err) {
     console.log("!!! ERROR !!! controllers/shop.js -> getProducts", err);
   }
@@ -33,7 +23,6 @@ exports.getProduct = async (req, res, next) => {
       docTitle: `${product.title} details`,
       path: "/products",
       product: product,
-      isAuthenticated: req.session.isLoggedIn,
     });
   } catch (err) {
     console.log("!!! ERROR !!! controlers/shop.js -> getProduct");
@@ -53,7 +42,6 @@ exports.getCart = async (req, res, next) => {
       docTitle: "Cart",
       path: "/cart",
       products: products,
-      isAuthenticated: req.session.isLoggedIn,
     });
   } catch (err) {
     console.log("!!! ERROR !!! controllers/shop.js -> getCart");
@@ -96,7 +84,6 @@ exports.getCheckoutItems = (req, res, next) => {
   res.render("shop/checkout", {
     docTitle: "Checkout",
     path: "/checkout",
-    isAuthenticated: req.session.isLoggedIn,
   });
 };
 
@@ -108,7 +95,6 @@ exports.getIndex = (req, res, next) => {
         products: products,
         docTitle: "shop",
         path: "/",
-        isAuthenticated: req.session.isLoggedIn,
       });
     });
   } catch (err) {
@@ -130,7 +116,7 @@ exports.postOrder = async (req, res, next) => {
     }
     const order = new Order({
       user: {
-        name: req.user.name,
+        email: req.user.email,
         userId: req.user._id,
       },
       products: orderProducts,
@@ -156,7 +142,6 @@ exports.getOrders = async (req, res, next) => {
       orders: orders,
       docTitle: "Orders",
       path: "/orders",
-      isAuthenticated: req.session.isLoggedIn,
     });
   } catch (err) {
     console.log("!!! ERROR !!! controllers/shop.js -> getOrders");

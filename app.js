@@ -3,6 +3,8 @@ const path = require("path");
 const express = require("express");
 const session = require("express-session");
 const bodyParser = require("body-parser");
+const csrf = require("csurf");
+const flash = require("connect-flash");
 //MongoDB
 const mongoose = require("mongoose");
 const MongoDBStore = require("connect-mongodb-session")(session);
@@ -23,6 +25,8 @@ const store = new MongoDBStore({
   uri: MONGODB_URI,
   collection: "sessions",
 });
+//*Apsauga pries CSRF atakas
+const csrfProtection = csrf();
 
 //* Middleware veikia tik i ateinancius requestus, paleidimo metu jie tik uzregistruojami
 
@@ -38,6 +42,8 @@ app.use(
     store: store,
   })
 );
+app.use(csrfProtection);
+app.use(flash());
 
 app.use(async (req, res, next) => {
   try {
@@ -48,6 +54,12 @@ app.use(async (req, res, next) => {
   } catch (err) {
     console.log(err);
   }
+  next();
+});
+
+app.use((req, res, next) => {
+  res.locals.isAuthenticated = req.session.isLoggedIn;
+  res.locals.csrfToken = req.csrfToken();
   next();
 });
 
@@ -62,17 +74,6 @@ app.use(errorController.get404);
 mongoose
   .connect(MONGODB_URI, { useUnifiedTopology: true, useNewUrlParser: true })
   .then(() => {
-    User.findOne().then((user) => {
-      if (!user) {
-        const user = new User({
-          name: "Lukas",
-          email: "tikras@pastas.lt",
-          cart: { items: [] },
-        });
-        user.save();
-      }
-    });
-
     console.log("connected to database...");
     app.listen(3000, () => console.log("Server is running..."));
   })
