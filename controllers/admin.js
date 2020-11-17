@@ -43,10 +43,13 @@ exports.postEditProduct = async (req, res, next) => {
 
   try {
     const updated = await Product.updateOne(
-      { _id: id },
+      { _id: id, userId: req.user._id },
       { title, price, description, imageUrl }
     );
     if (updated) {
+      res.redirect("/admin/products");
+    }
+    if (!updated) {
       res.redirect("/admin/products");
     }
   } catch (err) {
@@ -83,7 +86,7 @@ exports.postAddProduct = (req, res, next) => {
 exports.getAdminProducts = async (req, res, next) => {
   try {
     //* mongoose veikia su async await arba .then bet jie nera promisses, jei nori promise, reikia .exec() pridet
-    const products = await Product.find();
+    const products = await Product.find({ userId: req.user._id });
     res.render("admin/products", {
       products: products,
       path: "/admin/products",
@@ -100,8 +103,12 @@ exports.postDeleteProduct = async (req, res, next) => {
   const id = req.body.productId;
   // Product.destroy({where: {id: id}});
   try {
-    const productDeleted = await Product.deleteOne({ _id: id });
+    const productDeleted = await Product.deleteOne({
+      _id: id,
+      userId: req.user._id,
+    });
     if (productDeleted) res.redirect("/admin/products");
+    if (!productDeleted) res.redirect("/admin/products");
   } catch (err) {
     console.log("!!! ERROR !!! controllers/admin.js -> postDeleteProduct");
     console.log(err);

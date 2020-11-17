@@ -5,6 +5,7 @@ const session = require("express-session");
 const bodyParser = require("body-parser");
 const csrf = require("csurf");
 const flash = require("connect-flash");
+require("dotenv").config();
 //MongoDB
 const mongoose = require("mongoose");
 const MongoDBStore = require("connect-mongodb-session")(session);
@@ -16,8 +17,7 @@ const shopRoutes = require("./routes/shop");
 const authRoutes = require("./routes/auth");
 const errorController = require("./controllers/error");
 
-const MONGODB_URI =
-  "mongodb+srv://Lukas:mandarinas123@cluster0.qrzgg.mongodb.net/shop?retryWrites=true&w=majority";
+const MONGODB_URI = process.env.MONGODB_URI;
 
 const app = express();
 
@@ -75,6 +75,8 @@ mongoose
   .connect(MONGODB_URI, { useUnifiedTopology: true, useNewUrlParser: true })
   .then(() => {
     console.log("connected to database...");
-    app.listen(3000, () => console.log("Server is running..."));
+    app.listen(process.env.PORT || 3000, () =>
+      console.log("Server is running...")
+    );
   })
   .catch((err) => console.log(err));
